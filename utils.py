@@ -1,3 +1,6 @@
+
+import numpy as np
+
 from PIL import Image
 from torchvision import transforms
 from torchvision.datasets import CIFAR10
@@ -6,6 +9,14 @@ from torchvision.datasets import CIFAR10
 class CIFAR10Pair(CIFAR10):
     """CIFAR10 Dataset.
     """
+    def __init__(self, cls_filter, **kwargs):
+        super(CIFAR10Pair, self).__init__(**kwargs)
+
+        if cls_filter:
+            ind = np.where(np.isin(self.targets, cls_filter))[0]
+
+            self.data = self.data[ind]
+            self.targets = list(np.array(self.targets)[ind])
 
     def __getitem__(self, index):
         img, target = self.data[index], self.targets[index]
