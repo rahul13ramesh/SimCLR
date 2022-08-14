@@ -111,15 +111,15 @@ if __name__ == '__main__':
     train_data = utils.CIFAR10Pair(cls_filter=data_classes, root='data', train=True,
                                    transform=utils.train_transform, download=True)
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True,
-                              num_workers=16, pin_memory=True, drop_last=True)
+                              num_workers=8, pin_memory=True, drop_last=True)
     memory_data = utils.CIFAR10Pair(cls_filter=data_classes, root='data', train=True,
                                     transform=utils.test_transform, download=True)
     memory_loader = DataLoader(memory_data, batch_size=batch_size, shuffle=False,
-                               num_workers=16, pin_memory=True)
+                               num_workers=8, pin_memory=True)
     test_data = utils.CIFAR10Pair(cls_filter=data_classes, root='data', train=False,
                                   transform=utils.test_transform, download=True)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False,
-                             num_workers=16, pin_memory=True)
+                             num_workers=8, pin_memory=True)
 
     # Create directory
     fdir = 'results_' + args.tag
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     # training loop
     results = {'train_loss': [], 'test_acc@1': [], 'test_acc@5': []}
 
-    torch.save(model.state_dict(), fdir + '/model_0.pth')
+    torch.save(model.state_dict(), fdir + '/ckpt/model_0.pth')
     for epoch in range(1, epochs + 1):
         train_loss = train(model, train_loader, optimizer)
         results['train_loss'].append(train_loss)

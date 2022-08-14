@@ -1,6 +1,4 @@
-
 import numpy as np
-
 from PIL import Image
 from torchvision import transforms
 from torchvision.datasets import CIFAR10
