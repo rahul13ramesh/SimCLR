@@ -1,4 +1,6 @@
 import argparse
+import numpy as np
+import random
 import os
 import logging
 
@@ -88,13 +90,29 @@ def test(net, memory_data_loader, test_data_loader):
     return total_top1 / total_num * 100, total_top5 / total_num * 100
 
 
+def set_seed(seed=0):
+    """
+    Don't set true seed to be nearby values. Doesn't give best randomness
+    """
+    rng = np.random.default_rng(seed)
+    true_seed = int(rng.integers(2**30))
+
+    random.seed(true_seed)
+    np.random.seed(true_seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.manual_seed(true_seed)
+    torch.cuda.manual_seed(true_seed)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train SimCLR')
     parser.add_argument('--feature_dim', default=128, type=int, help='Feature dim for latent vector')
     parser.add_argument('--temperature', default=0.5, type=float, help='Temperature used in softmax')
     parser.add_argument('--k', default=200, type=int, help='Top k most similar images used to predict the label')
     parser.add_argument('--batch_size', default=512, type=int, help='Number of images in each mini-batch')
-    parser.add_argument('--epochs', default=500, type=int, help='Number of sweeps over the dataset to train')
+    parser.add_argument('--epochs', default=200, type=int, help='Number of sweeps over the dataset to train')
+    parser.add_argument('--seed', default=0, type=int, help='Number of sweeps over the dataset to train')
 
 
     parser.add_argument('--data_classes', default="[0,1,2,3,4,5,6,7,8,9]", type=str, help='Str ')
@@ -105,6 +123,8 @@ if __name__ == '__main__':
     feature_dim, temperature, k = args.feature_dim, args.temperature, args.k
     batch_size, epochs = args.batch_size, args.epochs
     data_classes = eval(args.data_classes)
+
+    set_seed(args.seed)
 
 
     # data prepare
@@ -122,10 +142,9 @@ if __name__ == '__main__':
                              num_workers=8, pin_memory=True)
 
     # Create directory
-    fdir = 'results_' + args.tag
-    if not os.path.exists(fdir):
-        os.mkdir(fdir)
-        os.mkdir(fdir + '/ckpt')
+    fdir = 'ckpts/results_' + args.tag + '/seed_' + str(args.seed)
+
+    os.makedirs(fdir + '/ckpt', exist_ok=True)
 
     # Store args
     arg_frame = pd.DataFrame(data=args.__dict__, index=[0]).T
@@ -151,5 +170,4 @@ if __name__ == '__main__':
         data_frame = pd.DataFrame(data=results, index=range(1, epoch + 1))
         data_frame.to_csv(fdir + '/statistics.csv', index_label='epoch')
 
-        if epoch % 10 == 0:
-            torch.save(model.state_dict(), fdir + '/ckpt/model_%d.pth' % epoch)
+        torch.save(model.state_dict(), fdir + '/ckpt/model_%d.pth' % epoch)
